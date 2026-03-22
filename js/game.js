@@ -58,6 +58,7 @@ function startNewGame() {
 
   updateStatus();
   renderMoveHistory();
+  updateCapturedPieces();
 
   // If AI plays White, make the opening move
   if (gameMode === 'hva' && playerColor === 'b') {
@@ -177,6 +178,7 @@ function completePromotion(from, to, promotion) {
 function afterMove() {
   updateStatus();
   renderMoveHistory();
+  updateCapturedPieces();
 
   if (gameMode === 'hva' && !game.game_over() && game.turn() !== playerColor) {
     triggerAiMove();
@@ -202,10 +204,55 @@ function triggerAiMove() {
     aiThinking = false;
     updateStatus();
     renderMoveHistory();
+    updateCapturedPieces();
   }, 50);
 }
 
 // ── UI Updates ─────────────────────────────────────────────────────────────────
+
+function updateCapturedPieces() {
+  const START  = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  const VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  const ORDER  = ['q', 'r', 'b', 'n', 'p'];
+
+  // Count pieces still on the board
+  const onBoard = { w: {p:0,n:0,b:0,r:0,q:0}, b: {p:0,n:0,b:0,r:0,q:0} };
+  game.board().forEach(row => row.forEach(sq => {
+    if (sq) onBoard[sq.color][sq.type]++;
+  }));
+
+  // How many of each piece type have been captured, keyed by the captured colour
+  const captured = { w: {}, b: {} };
+  let whiteCapturedValue = 0, blackCapturedValue = 0;
+  ORDER.forEach(type => {
+    captured.w[type] = START[type] - onBoard.w[type]; // white pieces captured (by Black)
+    captured.b[type] = START[type] - onBoard.b[type]; // black pieces captured (by White)
+    blackCapturedValue += captured.w[type] * VALUES[type];
+    whiteCapturedValue += captured.b[type] * VALUES[type];
+  });
+
+  function buildHTML(capturedColor) {
+    let html = '';
+    ORDER.forEach(type => {
+      const count = captured[capturedColor][type];
+      for (let i = 0; i < count; i++) {
+        const code = capturedColor + type.toUpperCase(); // e.g. 'bP', 'wQ'
+        html += `<img class="cap-piece" src="https://chessboardjs.com/img/chesspieces/wikipedia/${code}.png" alt="${type}">`;
+      }
+    });
+    return html;
+  }
+
+  const diff = whiteCapturedValue - blackCapturedValue;
+  const wAdvHtml = diff > 0 ? `<span class="cap-advantage">+${diff}</span>` : '';
+  const bAdvHtml = diff < 0 ? `<span class="cap-advantage">+${-diff}</span>` : '';
+
+  // Top bar = Black: show white pieces Black has captured
+  // Bottom bar = White: show black pieces White has captured
+  $('#top-captured').html(buildHTML('w') + bAdvHtml);
+  $('#bottom-captured').html(buildHTML('b') + wAdvHtml);
+}
+
 function updateStatus() {
   const $bar  = $('#status-bar');
   const $text = $('#status-text');
@@ -408,6 +455,7 @@ function startOnlineGame(orientation) {
 
   updateStatus();
   renderMoveHistory();
+  updateCapturedPieces();
 }
 
 /** Apply a move that arrived from Firebase (opponent moved). */
@@ -420,6 +468,7 @@ function applyRemoteMove(fen, lastMv) {
   }
   updateStatus();
   renderMoveHistory();
+  updateCapturedPieces();
 }
 
 // ── Room UI Helpers ───────────────────────────────────────────────────────────

@@ -44,9 +44,24 @@ body {
   color: #e0e0f0;
 }
 .captured-pieces {
-  font-size: 18px;
-  letter-spacing: 1px;
-  opacity: 0.8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px;
+  min-height: 22px;
+}
+
+.cap-piece {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.cap-advantage {
+  font-size: 12px;
+  font-weight: 700;
+  color: #a0a0ff;
+  margin-left: 4px;
 }
 
 /* Board container - relative so promotion modal can overlay */
