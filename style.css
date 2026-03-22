@@ -15,7 +15,7 @@ body {
 /* ── App Layout ───────────────────────────────────────────────────────────── */
 #app {
   display: grid;
-  grid-template-columns: auto 290px;
+  grid-template-columns: auto 320px;
   gap: 24px;
   max-width: 1080px;
   width: 100%;
@@ -33,7 +33,7 @@ body {
 .player-bar,
 #status-bar,
 #controls {
-  width: min(540px, 90vw);
+  width: min(600px, 90vw);
 }
 
 /* Player bars */
@@ -75,12 +75,11 @@ body {
 /* Board container - relative so promotion modal can overlay */
 #board-container {
   position: relative;
-  align-self: flex-start;
 }
 
 /* chessboard.js reads this width at init time */
 #board {
-  width: min(540px, 90vw);
+  width: min(600px, 90vw);
 }
 
 /* ── Legal Move Highlights ────────────────────────────────────────────────── */
@@ -235,7 +234,7 @@ select:hover { border-color: #5555aa; }
   border: 1px solid #2a2a46;
   /* Match board panel height dynamically */
   align-self: start;
-  max-height: calc(min(540px, 90vw) + 160px);
+  max-height: calc(min(600px, 90vw) + 160px);
 }
 
 #history-panel h2 {
@@ -389,6 +388,6 @@ select:hover { border-color: #5555aa; }
     max-height: 260px;
   }
   #board {
-    width: min(480px, 92vw);
+    width: min(520px, 92vw);
   }
 }
