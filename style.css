@@ -25,7 +25,15 @@ body {
 #board-panel {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
+}
+
+/* Player bars, status bar, controls — match board width */
+.player-bar,
+#status-bar,
+#controls {
+  width: min(540px, 90vw);
 }
 
 /* Player bars */
