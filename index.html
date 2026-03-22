@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess</title>
+
+  <!-- chessboard.js styles -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Left: Board + Controls ────────────────────────────────────────── -->
+  <div id="board-panel">
+
+    <!-- Opponent (top) -->
+    <div class="player-bar">
+      <span class="player-name" id="top-name">Black</span>
+      <span class="captured-pieces" id="top-captured"></span>
+    </div>
+
+    <!-- Board (chessboard.js renders here) -->
+    <div id="board-container">
+      <div id="board"></div>
+
+      <!-- Pawn promotion overlay -->
+      <div id="promotion-modal" class="hidden">
+        <div id="promotion-dialog">
+          <p>Choose promotion piece</p>
+          <div id="promotion-choices"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player (bottom) -->
+    <div class="player-bar">
+      <span class="player-name" id="bottom-name">White</span>
+      <span class="captured-pieces" id="bottom-captured"></span>
+    </div>
+
+    <!-- Game status -->
+    <div id="status-bar" class="active">
+      <span id="status-text">White to move</span>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+      <button id="btn-new-game">New Game</button>
+      <button id="btn-flip">Flip Board</button>
+      <button id="btn-undo">Undo</button>
+
+      <select id="mode-select" title="Game mode">
+        <option value="hvh">Human vs Human</option>
+        <option value="hva">Human vs AI</option>
+      </select>
+
+      <span id="color-select-wrap" style="display:none">
+        <select id="color-select" title="Your color">
+          <option value="w">Play as White</option>
+          <option value="b">Play as Black</option>
+        </select>
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Right: Move History ────────────────────────────────────────────── -->
+  <div id="history-panel">
+    <h2>Move History</h2>
+
+    <div id="move-list-container">
+      <table id="move-list">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>White</th>
+            <th>Black</th>
+          </tr>
+        </thead>
+        <tbody id="move-list-body"></tbody>
+      </table>
+    </div>
+
+    <div id="pgn-section">
+      <label>PGN</label>
+      <textarea id="pgn-output" readonly spellcheck="false"></textarea>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ── Scripts (load order matters) ──────────────────────────────────────── -->
+<!-- 1. jQuery (required by chessboard.js) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<!-- 2. chessboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+<!-- 3. chess.js 0.10.3 - exposes Chess as a browser global -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<!-- 4. AI engine -->
+<script src="js/ai.js"></script>
+
+<!-- 5. Game controller -->
+<script src="js/game.js"></script>
+
+</body>
+</html>
