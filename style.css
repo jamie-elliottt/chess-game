@@ -82,6 +82,11 @@ body {
   width: min(600px, 90vw);
 }
 
+/* ── Board Colour Themes ─────────────────────────────────────────────────── */
+/* Green: cream light squares, classic green dark squares */
+#board.theme-green .white-1e1d7 { background-color: #eeeed2 !important; }
+#board.theme-green .black-3c85d { background-color: #769656 !important; }
+
 /* ── Legal Move Highlights ────────────────────────────────────────────────── */
 /* Dot on empty squares */
 .hl-move {

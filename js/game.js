@@ -374,6 +374,10 @@ function bindControls() {
     startNewGame();
   });
 
+  $('#board-theme-select').on('change', function () {
+    applyBoardTheme($(this).val());
+  });
+
   // ── Online room buttons ─────────────────────────────────────────────────
 
   $('#btn-create-room').on('click', () => {
@@ -497,4 +501,11 @@ function showRoomActive(roomId, colorName) {
   $('#room-waiting').hide();
   $('#room-active').show();
   $('#room-active-info').text(`Room\u00a0${roomId}\u2002\u2014\u2002You\u00a0are\u00a0${colorName}`);
+}
+
+// ── Board Theme ───────────────────────────────────────────────────────────────
+
+function applyBoardTheme(theme) {
+  $('#board').removeClass('theme-green'); // clear all theme classes
+  if (theme !== 'brown') $('#board').addClass('theme-' + theme);
 }
