@@ -14,8 +14,10 @@ const PIECE_THEME = 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.
 // ── State ─────────────────────────────────────────────────────────────────────
 let game;                // Chess instance (chess.js 0.x)
 let board;               // Chessboard instance (chessboard.js 1.x)
-let gameMode    = 'hvh'; // 'hvh' | 'hva'
+let gameMode    = 'hvh'; // 'hvh' | 'hva' | 'hvo'
 let playerColor = 'w';   // human's color in hva mode
+let myColor     = 'w';   // this client's color in hvo mode
+let roomActive  = false; // true when an online game is in progress
 let aiThinking  = false; // block input while AI computes
 let lastMove    = null;  // { from, to } for last-move highlight
 let hlSquares   = [];    // squares currently showing hover highlights
@@ -28,6 +30,8 @@ $(document).ready(() => {
 
 // ── Game Init ─────────────────────────────────────────────────────────────────
 function startNewGame() {
+  if (gameMode === 'hvo') return; // online mode: room UI handles game start
+
   game       = new Chess();
   lastMove   = null;
   aiThinking = false;
@@ -70,6 +74,10 @@ function onDragStart(source, piece) {
   if (gameMode === 'hvh') {
     return pieceColor === game.turn();
   }
+  if (gameMode === 'hvo') {
+    if (!roomActive) return false;
+    return pieceColor === myColor && game.turn() === myColor;
+  }
   // hva: only allow the human's pieces on the human's turn
   return pieceColor === playerColor && game.turn() === playerColor;
 }
@@ -80,6 +88,7 @@ function onMouseoverSquare(square, piece) {
   const pieceColor = piece[0];
   if (pieceColor !== game.turn()) return;
   if (gameMode === 'hva' && pieceColor !== playerColor) return;
+  if (gameMode === 'hvo' && pieceColor !== myColor) return;
 
   const moves = game.moves({ square, verbose: true });
   if (!moves.length) return;
@@ -124,6 +133,7 @@ function onDrop(source, target) {
   lastMove = { from: result.from, to: result.to };
   highlightLastMove();
   afterMove();
+  if (gameMode === 'hvo') Multiplayer.sendMove(game.fen(), result.from, result.to);
 }
 
 function onSnapEnd() {
@@ -160,6 +170,7 @@ function completePromotion(from, to, promotion) {
   board.position(game.fen());
   highlightLastMove();
   afterMove();
+  if (gameMode === 'hvo') Multiplayer.sendMove(game.fen(), from, to);
 }
 
 // ── Post-Move Orchestration ────────────────────────────────────────────────────
@@ -288,7 +299,8 @@ function bindControls() {
   $('#btn-flip').on('click', () => board && board.flip());
 
   $('#btn-undo').on('click', () => {
-    if (game.game_over() || aiThinking) return;
+    if (gameMode === 'hvo') return; // no undo in online games
+    if (!game || game.game_over() || aiThinking) return;
     game.undo();
     if (gameMode === 'hva') game.undo(); // also undo the AI's preceding move
     lastMove = null;
@@ -302,11 +314,138 @@ function bindControls() {
   $('#mode-select').on('change', function () {
     gameMode = $(this).val();
     $('#color-select-wrap').toggle(gameMode === 'hva');
-    startNewGame();
+    $('#room-panel').toggle(gameMode === 'hvo');
+    if (gameMode === 'hvo') {
+      showRoomLobby();
+    } else {
+      startNewGame();
+    }
   });
 
   $('#color-select').on('change', function () {
     playerColor = $(this).val();
     startNewGame();
   });
+
+  // ── Online room buttons ─────────────────────────────────────────────────
+
+  $('#btn-create-room').on('click', () => {
+    const roomId = Multiplayer.createRoom(
+      // onOpponentJoined — game can start; creator plays White
+      () => {
+        myColor = 'w';
+        showRoomActive(roomId, 'White');
+        startOnlineGame('white');
+      },
+      // onMoveMade — apply opponent's move to our board
+      (fen, lastMv) => applyRemoteMove(fen, lastMv),
+      // onOpponentLeft — opponent closed their tab
+      () => {
+        roomActive = false;
+        $('#status-bar').attr('class', 'draw');
+        $('#status-text').text('Opponent disconnected.');
+      }
+    );
+    showRoomWaiting(roomId);
+  });
+
+  $('#btn-copy-code').on('click', () => {
+    navigator.clipboard.writeText($('#room-code-display').text());
+  });
+
+  $('#btn-join-room').on('click', () => {
+    const code = $('#room-code-input').val().trim().toUpperCase();
+    if (code.length !== 6) return;
+    Multiplayer.joinRoom(
+      code,
+      (fen, lastMv) => applyRemoteMove(fen, lastMv),
+      (msg) => {
+        $('#status-bar').attr('class', 'check');
+        $('#status-text').text(msg);
+      },
+      () => {
+        roomActive = false;
+        $('#status-bar').attr('class', 'draw');
+        $('#status-text').text('Opponent disconnected.');
+      }
+    );
+    myColor = 'b';
+    showRoomActive(code, 'Black');
+    startOnlineGame('black');
+  });
+
+  $('#btn-leave-room').on('click', () => {
+    Multiplayer.leaveRoom();
+    roomActive = false;
+    gameMode = 'hvh';
+    $('#mode-select').val('hvh');
+    $('#room-panel').hide();
+    startNewGame();
+  });
+}
+
+// ── Online Multiplayer ────────────────────────────────────────────────────────
+
+function startOnlineGame(orientation) {
+  game       = new Chess();
+  lastMove   = null;
+  roomActive = true;
+  hlSquares  = [];
+  $('#promotion-modal').addClass('hidden');
+
+  if (board) board.destroy();
+  board = Chessboard('board', {
+    draggable: true,
+    position:  'start',
+    orientation,
+    pieceTheme: PIECE_THEME,
+    onDragStart,
+    onDrop,
+    onSnapEnd,
+    onMouseoverSquare,
+    onMouseoutSquare,
+  });
+
+  updateStatus();
+  renderMoveHistory();
+}
+
+/** Apply a move that arrived from Firebase (opponent moved). */
+function applyRemoteMove(fen, lastMv) {
+  game.load(fen);
+  board.position(fen, false); // false = no animation (snap immediately)
+  if (lastMv) {
+    lastMove = lastMv;
+    highlightLastMove();
+  }
+  updateStatus();
+  renderMoveHistory();
+}
+
+// ── Room UI Helpers ───────────────────────────────────────────────────────────
+
+function showRoomLobby() {
+  if (board) { board.destroy(); board = null; }
+  $('#room-lobby').show();
+  $('#room-waiting').hide();
+  $('#room-active').hide();
+  $('#room-code-input').val('');
+  $('#status-bar').attr('class', 'active');
+  $('#status-text').text('Create a room or enter a code to join one.');
+}
+
+function showRoomWaiting(roomId) {
+  $('#room-lobby').hide();
+  $('#room-waiting').show();
+  $('#room-active').hide();
+  $('#room-code-display').text(roomId);
+  $('#status-bar').attr('class', 'thinking');
+  $('#status-text').text('Waiting for opponent\u2026');
+}
+
+function showRoomActive(roomId, colorName) {
+  $('#room-lobby').hide();
+  $('#room-waiting').hide();
+  $('#room-active').show();
+  $('#room-active-info').text(`Room\u00a0${roomId}\u2002\u2014\u2002You\u00a0are\u00a0${colorName}`);
 }

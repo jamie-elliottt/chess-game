@@ -301,6 +301,62 @@ select:hover { border-color: #5555aa; }
   line-height: 1.5;
 }
 
+/* ── Online Room Panel ────────────────────────────────────────────────────── */
+#room-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+#room-lobby, #room-waiting, #room-active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.room-or {
+  color: #555577;
+  font-size: 13px;
+}
+
+#room-code-input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #3a3a5c;
+  background: #252540;
+  color: #d4d4e8;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  width: 100px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+#room-code-input:focus {
+  outline: none;
+  border-color: #5555aa;
+}
+#room-code-input::placeholder {
+  letter-spacing: normal;
+  color: #555577;
+}
+
+#room-code-display {
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: #a0a0ff;
+  font-family: 'Courier New', monospace;
+}
+
+#room-active-info {
+  font-size: 13px;
+  color: #8888aa;
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   #app {
